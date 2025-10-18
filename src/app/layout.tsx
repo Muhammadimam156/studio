@@ -6,7 +6,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { AppHeader } from '@/components/app-header';
 
 export const metadata: Metadata = {
-  title: 'Gemini Studio',
+  title: 'Startup AI',
   description: 'A creative AI assistant app by Firebase Studio',
 };
 

@@ -13,12 +13,12 @@ export function AppSidebar() {
       <SidebarHeader>
         <Link href="/" className="flex items-center gap-2 font-headline font-semibold text-lg">
           <Bot className="h-7 w-7 text-primary" />
-          <span>Gemini Studio</span>
+          <span>Startup AI</span>
         </Link>
       </SidebarHeader>
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton asChild isActive={pathname === '/'} tooltip="Generate Content">
+          <SidebarMenuButton asChild isActive={pathname === '/'} tooltip="Generate Ideas">
             <Link href="/">
               <Sparkles />
               <span>Generate</span>
