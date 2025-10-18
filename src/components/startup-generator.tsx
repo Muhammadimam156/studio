@@ -4,16 +4,27 @@ import { useState } from 'react';
 import { handleStartupIdeaGeneration } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Sparkles, AlertCircle, Copy, Save } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from './loading-spinner';
 import type { GenerateStartupIdeasOutput } from '@/ai/flows/generate-startup-ideas';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export function StartupGenerator() {
+type GeneratorType = 
+  | 'names-taglines'
+  | 'elevator-pitch'
+  | 'problem-solution'
+  | 'audience-uvp'
+  | 'hero-copy'
+  | 'logo-colors';
+
+interface StartupGeneratorProps {
+  generatorType: GeneratorType;
+}
+
+export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
   const [prompt, setPrompt] = useState('');
   const [generatedIdeas, setGeneratedIdeas] = useState<GenerateStartupIdeasOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,6 +77,58 @@ export function StartupGenerator() {
       </CardContent>
     </Card>
   );
+  
+  const renderResults = () => {
+    if (!generatedIdeas) return null;
+
+    switch (generatorType) {
+      case 'names-taglines':
+        return (
+          <div className="grid gap-6 md:grid-cols-2">
+            <ResultCard title="Startup Name" content={generatedIdeas.startupName} onCopy={() => handleCopyToClipboard(generatedIdeas.startupName)} />
+            <ResultCard title="Tagline" content={generatedIdeas.tagline} onCopy={() => handleCopyToClipboard(generatedIdeas.tagline)} />
+          </div>
+        );
+      case 'elevator-pitch':
+        return <ResultCard title="Elevator Pitch" content={generatedIdeas.pitch} onCopy={() => handleCopyToClipboard(generatedIdeas.pitch)} />;
+      case 'problem-solution':
+        return (
+          <div className="grid gap-6 md:grid-cols-2">
+            <ResultCard title="Problem Statement" content={generatedIdeas.problemStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.problemStatement)} />
+            <ResultCard title="Solution Statement" content={generatedIdeas.solutionStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.solutionStatement)} />
+          </div>
+        );
+      case 'audience-uvp':
+        return (
+          <div className="grid gap-6 md:grid-cols-2">
+            <ResultCard title="Target Audience" content={generatedIdeas.targetAudience} onCopy={() => handleCopyToClipboard(generatedIdeas.targetAudience)} />
+            <ResultCard title="Unique Value Proposition" content={generatedIdeas.uniqueValueProposition} onCopy={() => handleCopyToClipboard(generatedIdeas.uniqueValueProposition)} />
+          </div>
+        );
+      case 'hero-copy':
+        return <ResultCard title="Website Hero Copy" content={generatedIdeas.heroCopy} onCopy={() => handleCopyToClipboard(generatedIdeas.heroCopy)} />;
+      case 'logo-colors':
+        return (
+          <div className="grid gap-6 md:grid-cols-2">
+            <ResultCard title="Logo Concept" content={generatedIdeas.logoConcept} onCopy={() => handleCopyToClipboard(generatedIdeas.logoConcept)} />
+            <ResultCard 
+              title="Color Palette" 
+              content={generatedIdeas.colorPalette.join(', ')}
+              onCopy={() => handleCopyToClipboard(generatedIdeas.colorPalette.join(', '))}
+              extra={
+                <div className="flex gap-2 mt-2">
+                  {generatedIdeas.colorPalette.map(color => (
+                    <div key={color} className="h-8 w-8 rounded-full border" style={{ backgroundColor: color }} />
+                  ))}
+                </div>
+              }
+            />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -82,7 +145,7 @@ export function StartupGenerator() {
             />
             <Button type="submit" disabled={isLoading || !prompt} className="w-full sm:w-auto" size="lg">
               {isLoading ? <LoadingSpinner className="mr-2" /> : <Sparkles className="mr-2" />}
-              Generate Ideas
+              Generate
             </Button>
           </form>
         </CardContent>
@@ -99,7 +162,7 @@ export function StartupGenerator() {
 
       {isLoading && (
         <div className="grid gap-6 md:grid-cols-2">
-          {Array.from({ length: 10 }).map((_, i) => (
+          {Array.from({ length: 2 }).map((_, i) => (
             <Card key={i}>
               <CardHeader>
                 <Skeleton className="h-6 w-1/2" />
@@ -115,63 +178,7 @@ export function StartupGenerator() {
 
       {generatedIdeas && (
         <div className="space-y-6">
-          <Card className="md:col-span-2 lg:col-span-3">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold">{generatedIdeas.startupName}</CardTitle>
-                <p className="text-muted-foreground text-lg">{generatedIdeas.tagline}</p>
-              </CardHeader>
-              <CardFooter className="gap-2">
-                  <Button onClick={handleSave} variant="outline">
-                      <Save className="mr-2" /> Save to Library
-                  </Button>
-              </CardFooter>
-          </Card>
-          
-          <Tabs defaultValue="pitch" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 mb-4 h-auto">
-              <TabsTrigger value="pitch">Pitch</TabsTrigger>
-              <TabsTrigger value="uvp">UVP</TabsTrigger>
-              <TabsTrigger value="problem">Problem</TabsTrigger>
-              <TabsTrigger value="solution">Solution</TabsTrigger>
-              <TabsTrigger value="audience">Audience</TabsTrigger>
-              <TabsTrigger value="logo">Logo</TabsTrigger>
-              <TabsTrigger value="colors">Colors</TabsTrigger>
-            </TabsList>
-            <TabsContent value="pitch">
-              <ResultCard title="Elevator Pitch" content={generatedIdeas.pitch} onCopy={() => handleCopyToClipboard(generatedIdeas.pitch)} />
-            </TabsContent>
-            <TabsContent value="uvp">
-              <ResultCard title="Unique Value Proposition" content={generatedIdeas.uniqueValueProposition} onCopy={() => handleCopyToClipboard(generatedIdeas.uniqueValueProposition)} />
-            </TabsContent>
-            <TabsContent value="problem">
-              <ResultCard title="Problem Statement" content={generatedIdeas.problemStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.problemStatement)} />
-            </TabsContent>
-            <TabsContent value="solution">
-              <ResultCard title="Solution Statement" content={generatedIdeas.solutionStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.solutionStatement)} />
-            </TabsContent>
-            <TabsContent value="audience">
-              <ResultCard title="Target Audience" content={generatedIdeas.targetAudience} onCopy={() => handleCopyToClipboard(generatedIdeas.targetAudience)} />
-            </TabsContent>
-            <TabsContent value="logo">
-              <ResultCard title="Logo Concept" content={generatedIdeas.logoConcept} onCopy={() => handleCopyToClipboard(generatedIdeas.logoConcept)} />
-            </TabsContent>
-            <TabsContent value="colors">
-              <ResultCard 
-                title="Color Palette" 
-                content={generatedIdeas.colorPalette.join(', ')}
-                onCopy={() => handleCopyToClipboard(generatedIdeas.colorPalette.join(', '))}
-                extra={
-                  <div className="flex gap-2 mt-2">
-                    {generatedIdeas.colorPalette.map(color => (
-                      <div key={color} className="h-8 w-8 rounded-full border" style={{ backgroundColor: color }} />
-                    ))}
-                  </div>
-                }
-              />
-            </TabsContent>
-          </Tabs>
-
-          <ResultCard title="Website Hero Copy" content={generatedIdeas.heroCopy} onCopy={() => handleCopyToClipboard(generatedIdeas.heroCopy)} />
+          {renderResults()}
         </div>
       )}
     </div>
