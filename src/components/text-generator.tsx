@@ -52,20 +52,24 @@ export function TextGenerator() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Textarea
-          placeholder="e.g., Write a short sci-fi story about a sentient AI on a lonely space probe."
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          rows={3}
-          className="text-base"
-          disabled={isLoading}
-        />
-        <Button type="submit" disabled={isLoading || !prompt} className="w-full sm:w-auto" variant="outline">
-          {isLoading ? <LoadingSpinner className="mr-2" /> : <Sparkles className="mr-2" />}
-          Generate Text
-        </Button>
-      </form>
+      <Card>
+        <CardContent className="p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Textarea
+              placeholder="e.g., Write a short sci-fi story about a sentient AI on a lonely space probe."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={3}
+              className="text-base"
+              disabled={isLoading}
+            />
+            <Button type="submit" disabled={isLoading || !prompt} size="lg">
+              {isLoading ? <LoadingSpinner className="mr-2" /> : <Sparkles className="mr-2" />}
+              Generate Text
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {error && (
         <Alert variant="destructive">
@@ -88,7 +92,7 @@ export function TextGenerator() {
         </Card>
       )}
 
-      {generatedText && (
+      {generatedText && !isLoading && (
         <Card>
           <CardHeader>
             <CardTitle>Generated Text</CardTitle>
@@ -98,7 +102,8 @@ export function TextGenerator() {
               value={generatedText}
               onChange={(e) => setGeneratedText(e.target.value)}
               rows={10}
-              className="text-base"
+              className="text-base bg-secondary"
+              readOnly
             />
           </CardContent>
           <CardFooter className="gap-2">

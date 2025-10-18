@@ -65,11 +65,16 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-medium">{title}</CardTitle>
-        {onCopy && (
-          <Button variant="ghost" size="icon" onClick={onCopy}>
-            <Copy className="h-4 w-4" />
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {onCopy && (
+            <Button variant="ghost" size="icon" onClick={onCopy} className="h-8 w-8">
+              <Copy className="h-4 w-4" />
+            </Button>
+          )}
+           <Button variant="ghost" size="icon" onClick={handleSave} className="h-8 w-8">
+              <Save className="h-4 w-4" />
+            </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {typeof content === 'string' ? <p className="text-muted-foreground">{content}</p> : content}
@@ -132,8 +137,8 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
 
   return (
     <div className="space-y-8">
-      <Card className="p-4">
-        <CardContent className="p-0">
+      <Card>
+        <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Textarea
               placeholder="e.g., I want to build an app that connects students with mentors."
@@ -176,7 +181,7 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
         </div>
       )}
 
-      {generatedIdeas && (
+      {generatedIdeas && !isLoading && (
         <div className="space-y-6">
           {renderResults()}
         </div>
