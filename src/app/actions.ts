@@ -14,7 +14,8 @@ export async function handleTextGeneration(prompt: string) {
     return { success: true, data: result };
   } catch (error) {
     console.error(error);
-    return { success: false, error: 'Failed to generate text. Please try again later.' };
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+    return { success: false, error: `Failed to generate text. ${errorMessage}` };
   }
 }
 
@@ -27,7 +28,8 @@ export async function handleImageGeneration(prompt: string) {
     return { success: true, data: result };
   } catch (error) {
     console.error(error);
-    return { success: false, error: 'Failed to generate image. Please try again later.' };
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+    return { success: false, error: `Failed to generate image. ${errorMessage}` };
   }
 }
 
@@ -40,6 +42,7 @@ export async function handleStartupIdeaGeneration(prompt: string) {
     return { success: true, data: result };
   } catch (error) {
     console.error(error);
-    return { success: false, error: 'Failed to generate startup ideas. Please try again later.' };
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+    return { success: false, error: `Failed to generate startup ideas. ${errorMessage}` };
   }
 }
