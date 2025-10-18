@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { handleStartupIdeaGeneration } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Sparkles, AlertCircle, Copy, Save } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from './loading-spinner';
 import type { GenerateStartupIdeasOutput } from '@/ai/flows/generate-startup-ideas';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function StartupGenerator() {
   const [prompt, setPrompt] = useState('');
@@ -49,13 +50,15 @@ export function StartupGenerator() {
     });
   };
 
-  const ResultCard = ({ title, content, onCopy, extra }: { title: string, content: string | string[], onCopy: () => void, extra?: React.ReactNode }) => (
+  const ResultCard = ({ title, content, onCopy, extra }: { title: string, content: string | string[], onCopy?: () => void, extra?: React.ReactNode }) => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-medium">{title}</CardTitle>
-        <Button variant="ghost" size="icon" onClick={onCopy}>
-          <Copy className="h-4 w-4" />
-        </Button>
+        {onCopy && (
+          <Button variant="ghost" size="icon" onClick={onCopy}>
+            <Copy className="h-4 w-4" />
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         {typeof content === 'string' ? <p className="text-muted-foreground">{content}</p> : content}
@@ -112,39 +115,62 @@ export function StartupGenerator() {
 
       {generatedIdeas && (
         <div className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-             <Card className="md:col-span-2 lg:col-span-3">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-bold">{generatedIdeas.startupName}</CardTitle>
-                  <p className="text-muted-foreground text-lg">{generatedIdeas.tagline}</p>
-                </CardHeader>
-                <CardFooter className="gap-2">
-                    <Button onClick={handleSave} variant="outline">
-                        <Save className="mr-2" /> Save to Library
-                    </Button>
-                </CardFooter>
-            </Card>
-          </div>
-          <div className="grid gap-6 md:grid-cols-2">
-            <ResultCard title="Elevator Pitch" content={generatedIdeas.pitch} onCopy={() => handleCopyToClipboard(generatedIdeas.pitch)} />
-            <ResultCard title="Unique Value Proposition" content={generatedIdeas.uniqueValueProposition} onCopy={() => handleCopyToClipboard(generatedIdeas.uniqueValueProposition)} />
-            <ResultCard title="Problem Statement" content={generatedIdeas.problemStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.problemStatement)} />
-            <ResultCard title="Solution Statement" content={generatedIdeas.solutionStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.solutionStatement)} />
-            <ResultCard title="Target Audience" content={generatedIdeas.targetAudience} onCopy={() => handleCopyToClipboard(generatedIdeas.targetAudience)} />
-            <ResultCard title="Logo Concept" content={generatedIdeas.logoConcept} onCopy={() => handleCopyToClipboard(generatedIdeas.logoConcept)} />
-            <ResultCard 
-              title="Color Palette" 
-              content={generatedIdeas.colorPalette.join(', ')}
-              onCopy={() => handleCopyToClipboard(generatedIdeas.colorPalette.join(', '))}
-              extra={
-                <div className="flex gap-2 mt-2">
-                  {generatedIdeas.colorPalette.map(color => (
-                    <div key={color} className="h-8 w-8 rounded-full border" style={{ backgroundColor: color }} />
-                  ))}
-                </div>
-              }
-            />
-          </div>
+          <Card className="md:col-span-2 lg:col-span-3">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold">{generatedIdeas.startupName}</CardTitle>
+                <p className="text-muted-foreground text-lg">{generatedIdeas.tagline}</p>
+              </CardHeader>
+              <CardFooter className="gap-2">
+                  <Button onClick={handleSave} variant="outline">
+                      <Save className="mr-2" /> Save to Library
+                  </Button>
+              </CardFooter>
+          </Card>
+          
+          <Tabs defaultValue="pitch" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 mb-4 h-auto">
+              <TabsTrigger value="pitch">Pitch</TabsTrigger>
+              <TabsTrigger value="uvp">UVP</TabsTrigger>
+              <TabsTrigger value="problem">Problem</TabsTrigger>
+              <TabsTrigger value="solution">Solution</TabsTrigger>
+              <TabsTrigger value="audience">Audience</TabsTrigger>
+              <TabsTrigger value="logo">Logo</TabsTrigger>
+              <TabsTrigger value="colors">Colors</TabsTrigger>
+            </TabsList>
+            <TabsContent value="pitch">
+              <ResultCard title="Elevator Pitch" content={generatedIdeas.pitch} onCopy={() => handleCopyToClipboard(generatedIdeas.pitch)} />
+            </TabsContent>
+            <TabsContent value="uvp">
+              <ResultCard title="Unique Value Proposition" content={generatedIdeas.uniqueValueProposition} onCopy={() => handleCopyToClipboard(generatedIdeas.uniqueValueProposition)} />
+            </TabsContent>
+            <TabsContent value="problem">
+              <ResultCard title="Problem Statement" content={generatedIdeas.problemStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.problemStatement)} />
+            </TabsContent>
+            <TabsContent value="solution">
+              <ResultCard title="Solution Statement" content={generatedIdeas.solutionStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.solutionStatement)} />
+            </TabsContent>
+            <TabsContent value="audience">
+              <ResultCard title="Target Audience" content={generatedIdeas.targetAudience} onCopy={() => handleCopyToClipboard(generatedIdeas.targetAudience)} />
+            </TabsContent>
+            <TabsContent value="logo">
+              <ResultCard title="Logo Concept" content={generatedIdeas.logoConcept} onCopy={() => handleCopyToClipboard(generatedIdeas.logoConcept)} />
+            </TabsContent>
+            <TabsContent value="colors">
+              <ResultCard 
+                title="Color Palette" 
+                content={generatedIdeas.colorPalette.join(', ')}
+                onCopy={() => handleCopyToClipboard(generatedIdeas.colorPalette.join(', '))}
+                extra={
+                  <div className="flex gap-2 mt-2">
+                    {generatedIdeas.colorPalette.map(color => (
+                      <div key={color} className="h-8 w-8 rounded-full border" style={{ backgroundColor: color }} />
+                    ))}
+                  </div>
+                }
+              />
+            </TabsContent>
+          </Tabs>
+
           <ResultCard title="Website Hero Copy" content={generatedIdeas.heroCopy} onCopy={() => handleCopyToClipboard(generatedIdeas.heroCopy)} />
         </div>
       )}

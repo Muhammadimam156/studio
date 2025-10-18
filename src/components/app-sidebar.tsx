@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Sidebar, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { Sparkles, Library, Bot } from 'lucide-react';
+import { Sparkles, Library, Bot, Text, Image as ImageIcon } from 'lucide-react';
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -21,7 +21,23 @@ export function AppSidebar() {
           <SidebarMenuButton asChild isActive={pathname === '/'} tooltip="Generate Ideas">
             <Link href="/">
               <Sparkles />
-              <span>Generate</span>
+              <span>Generate Ideas</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild isActive={pathname === '/text-generator'} tooltip="Text Generator">
+            <Link href="/text-generator">
+              <Text />
+              <span>Text Generator</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild isActive={pathname === '/image-generator'} tooltip="Image Generator">
+            <Link href="/image-generator">
+              <ImageIcon />
+              <span>Image Generator</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
