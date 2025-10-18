@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Lightbulb, Presentation, Target, Code, Palette, Text, Image as ImageIcon } from "lucide-react";
+import { ArrowRight, Lightbulb, Presentation, Target, Code, Palette, Text } from "lucide-react";
 
 const tools = [
   {
@@ -15,12 +15,6 @@ const tools = [
     href: "/text-generator",
     icon: <Text className="h-6 w-6" />,
     description: "Generate any kind of text content you can imagine. Just enter a prompt."
-  },
-  {
-    title: "AI Image Generator",
-    href: "/image-generator",
-    icon: <ImageIcon className="h-6 w-6" />,
-    description: "Create stunning images from text prompts. Describe what you want to see."
   }
 ];
 
@@ -77,7 +71,7 @@ export default function Home() {
       </div>
 
       <div className="space-y-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {tools.map((tool) => (
               <Card key={tool.title} className="flex flex-col">
                 <CardHeader>

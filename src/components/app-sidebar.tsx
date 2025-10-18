@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Sidebar, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { Sparkles, Library, Bot, Text, Image as ImageIcon, Lightbulb, Presentation, Target, Code, Palette } from 'lucide-react';
+import { Sparkles, Library, Bot, Text, Lightbulb, Presentation, Target, Code, Palette } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -79,14 +79,6 @@ export function AppSidebar() {
             <Link href="/text-generator">
               <Text />
               <span>Text Generator</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-          <SidebarMenuButton asChild isActive={pathname === '/image-generator'} tooltip="Image Generator">
-            <Link href="/image-generator">
-              <ImageIcon />
-              <span>Image Generator</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
