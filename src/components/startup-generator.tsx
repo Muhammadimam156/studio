@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Sparkles, AlertCircle, Copy, Save, FileDown } from 'lucide-react';
+import { Sparkles, AlertCircle, Copy, Save, FileDown, RefreshCw } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { LoadingSpinner } from './loading-spinner';
 import type { GenerateStartupIdeasOutput } from '@/ai/flows/generate-startup-ideas';
@@ -97,6 +97,11 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
     }
     setIsLoading(false);
   };
+
+  const handleRegenerate = () => {
+    if (!prompt) return;
+    handleSubmit(new Event('submit') as unknown as React.FormEvent);
+  };
   
   const handleCopyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -185,7 +190,7 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
     });
   };
 
-  const ResultCard = ({ title, content, onCopy, onSave, onDownload, extra }: { title: string, content: string | string[], onCopy?: () => void, onSave?: () => void, onDownload?: () => void, extra?: React.ReactNode }) => (
+  const ResultCard = ({ title, content, onCopy, onSave, onDownload, extra, onContentChange, rows }: { title: string, content: string | string[], onCopy?: () => void, onSave?: () => void, onDownload?: () => void, extra?: React.ReactNode, onContentChange: (value: string) => void, rows?: number }) => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-medium">{title}</CardTitle>
@@ -208,7 +213,12 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {typeof content === 'string' ? <p className="text-muted-foreground">{content}</p> : content}
+        <Textarea
+          value={Array.isArray(content) ? content.join(', ') : content}
+          onChange={(e) => onContentChange(e.target.value)}
+          className="text-muted-foreground bg-transparent border-0 p-0 text-base"
+          rows={rows || (Array.isArray(content) ? 1 : (content.match(/\n/g) || []).length + 2)}
+        />
         {extra}
       </CardContent>
     </Card>
@@ -217,16 +227,26 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
   const renderResults = () => {
     if (!generatedIdeas) return null;
 
+    const handleFieldChange = (field: keyof GenerateStartupIdeasOutput, value: string) => {
+        setGeneratedIdeas(prev => {
+            if (!prev) return null;
+            if (field === 'colorPalette') {
+                return { ...prev, [field]: value.split(',').map(s => s.trim()) };
+            }
+            return { ...prev, [field]: value };
+        });
+    }
+
     switch (generatorType) {
       case 'names-taglines':
         return (
           <div className="grid gap-6 md:grid-cols-2">
-            <ResultCard title="Startup Name" content={generatedIdeas.startupName} onCopy={() => handleCopyToClipboard(generatedIdeas.startupName)} onSave={() => handleSave({ startupName: generatedIdeas.startupName }, 'startup-name')} onDownload={() => handleDownload(generatedIdeas.startupName, 'startup-name.txt')} />
-            <ResultCard title="Tagline" content={generatedIdeas.tagline} onCopy={() => handleCopyToClipboard(generatedIdeas.tagline)} onSave={() => handleSave({ tagline: generatedIdeas.tagline }, 'tagline')} onDownload={() => handleDownload(generatedIdeas.tagline, 'tagline.txt')} />
+            <ResultCard title="Startup Name" content={generatedIdeas.startupName} onCopy={() => handleCopyToClipboard(generatedIdeas.startupName)} onSave={() => handleSave({ startupName: generatedIdeas.startupName }, 'startup-name')} onDownload={() => handleDownload(generatedIdeas.startupName, 'startup-name.txt')} onContentChange={(value) => handleFieldChange('startupName', value)} rows={1} />
+            <ResultCard title="Tagline" content={generatedIdeas.tagline} onCopy={() => handleCopyToClipboard(generatedIdeas.tagline)} onSave={() => handleSave({ tagline: generatedIdeas.tagline }, 'tagline')} onDownload={() => handleDownload(generatedIdeas.tagline, 'tagline.txt')} onContentChange={(value) => handleFieldChange('tagline', value)} />
           </div>
         );
       case 'elevator-pitch':
-        return <ResultCard title="Elevator Pitch" content={generatedIdeas.pitch} onCopy={() => handleCopyToClipboard(generatedIdeas.pitch)} onSave={() => handleSave({ pitch: generatedIdeas.pitch }, 'pitch')} onDownload={() => handleDownload(generatedIdeas.pitch, 'elevator-pitch.txt')} />;
+        return <ResultCard title="Elevator Pitch" content={generatedIdeas.pitch} onCopy={() => handleCopyToClipboard(generatedIdeas.pitch)} onSave={() => handleSave({ pitch: generatedIdeas.pitch }, 'pitch')} onDownload={() => handleDownload(generatedIdeas.pitch, 'elevator-pitch.txt')} onContentChange={(value) => handleFieldChange('pitch', value)} />;
       case 'problem-solution':
         const problemSolutionCode = `<div>
   <h3 class="text-xl font-bold">Problem</h3>
@@ -242,9 +262,10 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
               preview={
                 <div>
                   <h3 className="text-lg font-semibold">Problem</h3>
-                  <p className="text-muted-foreground">{generatedIdeas.problemStatement}</p>
+                  <Textarea value={generatedIdeas.problemStatement} onChange={(e) => handleFieldChange('problemStatement', e.target.value)} className="text-muted-foreground bg-transparent border-0 p-0" rows={(generatedIdeas.problemStatement.match(/\n/g) || []).length + 2} />
+
                   <h3 className="text-lg font-semibold mt-4">Solution</h3>
-                  <p className="text-muted-foreground">{generatedIdeas.solutionStatement}</p>
+                   <Textarea value={generatedIdeas.solutionStatement} onChange={(e) => handleFieldChange('solutionStatement', e.target.value)} className="text-muted-foreground bg-transparent border-0 p-0" rows={(generatedIdeas.solutionStatement.match(/\n/g) || []).length + 2} />
                 </div>
               }
               code={problemSolutionCode}
@@ -264,22 +285,24 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
       case 'audience-uvp':
         return (
           <div className="grid gap-6 md:grid-cols-2">
-            <ResultCard title="Target Audience" content={generatedIdeas.targetAudience} onCopy={() => handleCopyToClipboard(generatedIdeas.targetAudience)} onSave={() => handleSave({ targetAudience: generatedIdeas.targetAudience }, 'target-audience')} onDownload={() => handleDownload(generatedIdeas.targetAudience, 'target-audience.txt')} />
-            <ResultCard title="Unique Value Proposition" content={generatedIdeas.uniqueValueProposition} onCopy={() => handleCopyToClipboard(generatedIdeas.uniqueValueProposition)} onSave={() => handleSave({ uniqueValueProposition: generatedIdeas.uniqueValueProposition }, 'uvp')} onDownload={() => handleDownload(generatedIdeas.uniqueValueProposition, 'uvp.txt')} />
+            <ResultCard title="Target Audience" content={generatedIdeas.targetAudience} onCopy={() => handleCopyToClipboard(generatedIdeas.targetAudience)} onSave={() => handleSave({ targetAudience: generatedIdeas.targetAudience }, 'target-audience')} onDownload={() => handleDownload(generatedIdeas.targetAudience, 'target-audience.txt')} onContentChange={(value) => handleFieldChange('targetAudience', value)} />
+            <ResultCard title="Unique Value Proposition" content={generatedIdeas.uniqueValueProposition} onCopy={() => handleCopyToClipboard(generatedIdeas.uniqueValueProposition)} onSave={() => handleSave({ uniqueValueProposition: generatedIdeas.uniqueValueProposition }, 'uvp')} onDownload={() => handleDownload(generatedIdeas.uniqueValueProposition, 'uvp.txt')} onContentChange={(value) => handleFieldChange('uniqueValueProposition', value)} />
           </div>
         );
       case 'hero-copy':
-        return <ResultCard title="Website Hero Copy" content={generatedIdeas.heroCopy} onCopy={() => handleCopyToClipboard(generatedIdeas.heroCopy)} onSave={() => handleSave({ heroCopy: generatedIdeas.heroCopy }, 'hero-copy')} onDownload={() => handleDownload(generatedIdeas.heroCopy, 'hero-copy.txt')} />;
+        return <ResultCard title="Website Hero Copy" content={generatedIdeas.heroCopy} onCopy={() => handleCopyToClipboard(generatedIdeas.heroCopy)} onSave={() => handleSave({ heroCopy: generatedIdeas.heroCopy }, 'hero-copy')} onDownload={() => handleDownload(generatedIdeas.heroCopy, 'hero-copy.txt')} onContentChange={(value) => handleFieldChange('heroCopy', value)} />;
       case 'logo-colors':
         return (
           <div className="grid gap-6 md:grid-cols-2">
-            <ResultCard title="Logo Concept" content={generatedIdeas.logoConcept} onCopy={() => handleCopyToClipboard(generatedIdeas.logoConcept)} onSave={() => handleSave({ logoConcept: generatedIdeas.logoConcept }, 'logo-concept')} onDownload={() => handleDownload(generatedIdeas.logoConcept, 'logo-concept.txt')} />
+            <ResultCard title="Logo Concept" content={generatedIdeas.logoConcept} onCopy={() => handleCopyToClipboard(generatedIdeas.logoConcept)} onSave={() => handleSave({ logoConcept: generatedIdeas.logoConcept }, 'logo-concept')} onDownload={() => handleDownload(generatedIdeas.logoConcept, 'logo-concept.txt')} onContentChange={(value) => handleFieldChange('logoConcept', value)} />
             <ResultCard 
               title="Color Palette" 
               content={generatedIdeas.colorPalette.join(', ')}
               onCopy={() => handleCopyToClipboard(generatedIdeas.colorPalette.join(', '))}
               onSave={() => handleSave({ colorPalette: generatedIdeas.colorPalette }, 'color-palette')}
               onDownload={() => handleDownload(generatedIdeas.colorPalette.join(', '), 'color-palette.txt')}
+              onContentChange={(value) => handleFieldChange('colorPalette', value)}
+              rows={1}
               extra={
                 <div className="flex gap-2 mt-2">
                   {generatedIdeas.colorPalette.map(color => (
@@ -308,10 +331,18 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
               className="text-base"
               disabled={isLoading}
             />
-            <Button type="submit" disabled={isLoading || !prompt} className="w-full sm:w-auto" size="lg">
-              {isLoading ? <LoadingSpinner className="mr-2" /> : <Sparkles className="mr-2" />}
-              Generate
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" disabled={isLoading || !prompt} className="w-full sm:w-auto" size="lg">
+                {isLoading ? <LoadingSpinner className="mr-2" /> : <Sparkles className="mr-2" />}
+                Generate
+              </Button>
+              {generatedIdeas && (
+                <Button onClick={handleRegenerate} disabled={isLoading || !prompt} className="w-full sm:w-auto" size="lg" variant="outline">
+                  {isLoading ? <LoadingSpinner className="mr-2" /> : <RefreshCw className="mr-2" />}
+                  Regenerate
+                </Button>
+              )}
+            </div>
           </form>
         </CardContent>
       </Card>

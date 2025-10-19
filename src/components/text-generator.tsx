@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Sparkles, Copy, Save, AlertCircle, FileDown } from 'lucide-react';
+import { Sparkles, Copy, Save, AlertCircle, FileDown, RefreshCw } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { LoadingSpinner } from './loading-spinner';
 import { useAuth, useFirebase } from '@/firebase';
@@ -40,6 +40,11 @@ export function TextGenerator() {
     setIsLoading(false);
   };
   
+  const handleRegenerate = () => {
+    if (!prompt) return;
+    handleSubmit(new Event('submit') as unknown as React.FormEvent);
+  };
+
   const handleCopyToClipboard = () => {
     if (!generatedText) return;
     navigator.clipboard.writeText(generatedText);
@@ -111,10 +116,18 @@ export function TextGenerator() {
               className="text-base"
               disabled={isLoading}
             />
-            <Button type="submit" disabled={isLoading || !prompt} size="lg">
-              {isLoading ? <LoadingSpinner className="mr-2" /> : <Sparkles className="mr-2" />}
-              Generate Text
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" disabled={isLoading || !prompt} size="lg">
+                {isLoading ? <LoadingSpinner className="mr-2" /> : <Sparkles className="mr-2" />}
+                Generate Text
+              </Button>
+              {generatedText && (
+                <Button onClick={handleRegenerate} disabled={isLoading || !prompt} size="lg" variant="outline">
+                    {isLoading ? <LoadingSpinner className="mr-2" /> : <RefreshCw className="mr-2" />}
+                    Regenerate
+                </Button>
+              )}
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -150,8 +163,7 @@ export function TextGenerator() {
               value={generatedText}
               onChange={(e) => setGeneratedText(e.target.value)}
               rows={10}
-              className="text-base bg-secondary"
-              readOnly
+              className="text-base bg-background"
             />
           </CardContent>
           <CardFooter className="gap-2">
