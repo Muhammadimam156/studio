@@ -7,10 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Sparkles, AlertCircle, Copy, Save } from 'lucide-react';
+import { Sparkles, AlertCircle, Copy, Save, FileDown } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { LoadingSpinner } from './loading-spinner';
 import type { GenerateStartupIdeasOutput } from '@/ai/flows/generate-startup-ideas';
+import jsPDF from 'jspdf';
 
 type GeneratorType = 
   | 'names-taglines'
@@ -61,6 +62,37 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
     });
   };
 
+  const handleExportToPdf = () => {
+    if (!generatedIdeas) return;
+
+    const doc = new jsPDF();
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('Startup Idea: Problem & Solution', 14, 22);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Problem Statement', 14, 40);
+    doc.setFont('helvetica', 'normal');
+    const problemLines = doc.splitTextToSize(generatedIdeas.problemStatement, 180);
+    doc.text(problemLines, 14, 48);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    const solutionYPos = 48 + (problemLines.length * 7) + 10;
+    doc.text('Solution Statement', 14, solutionYPos);
+    doc.setFont('helvetica', 'normal');
+    const solutionLines = doc.splitTextToSize(generatedIdeas.solutionStatement, 180);
+    doc.text(solutionLines, 14, solutionYPos + 8);
+    
+    doc.save('problem-solution.pdf');
+    toast({
+        title: "Exported to PDF!",
+        description: "Your problem and solution statements have been exported.",
+    });
+  };
+
   const ResultCard = ({ title, content, onCopy, extra }: { title: string, content: string | string[], onCopy?: () => void, extra?: React.ReactNode }) => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -98,9 +130,17 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
         return <ResultCard title="Elevator Pitch" content={generatedIdeas.pitch} onCopy={() => handleCopyToClipboard(generatedIdeas.pitch)} />;
       case 'problem-solution':
         return (
-          <div className="grid gap-6 md:grid-cols-2">
-            <ResultCard title="Problem Statement" content={generatedIdeas.problemStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.problemStatement)} />
-            <ResultCard title="Solution Statement" content={generatedIdeas.solutionStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.solutionStatement)} />
+          <div className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+                <ResultCard title="Problem Statement" content={generatedIdeas.problemStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.problemStatement)} />
+                <ResultCard title="Solution Statement" content={generatedIdeas.solutionStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.solutionStatement)} />
+            </div>
+            <div className="flex justify-end">
+                <Button onClick={handleExportToPdf}>
+                    <FileDown className="mr-2" />
+                    Export to PDF
+                </Button>
+            </div>
           </div>
         );
       case 'audience-uvp':
