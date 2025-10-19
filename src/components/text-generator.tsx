@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Sparkles, Copy, Save, AlertCircle } from 'lucide-react';
+import { Sparkles, Copy, Save, AlertCircle, FileDown } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { LoadingSpinner } from './loading-spinner';
 import { useAuth, useFirebase } from '@/firebase';
@@ -46,6 +46,23 @@ export function TextGenerator() {
     toast({
       title: "Copied to clipboard!",
       description: "The generated text has been copied.",
+    });
+  };
+
+  const handleDownload = () => {
+    if (!generatedText) return;
+    const blob = new Blob([generatedText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'generated-text.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast({
+      title: "Downloaded!",
+      description: "Generated text has been downloaded.",
     });
   };
 
@@ -138,6 +155,9 @@ export function TextGenerator() {
             />
           </CardContent>
           <CardFooter className="gap-2">
+            <Button onClick={handleDownload} variant="secondary">
+              <FileDown className="mr-2" /> Download
+            </Button>
             <Button onClick={handleCopyToClipboard} variant="secondary">
               <Copy className="mr-2" /> Copy
             </Button>

@@ -60,6 +60,22 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
       title: "Copied to clipboard!",
     });
   };
+
+  const handleDownload = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast({
+      title: "Downloaded!",
+      description: `${filename} has been downloaded.`,
+    });
+  };
   
   const handleSave = (contentToSave: any, type: string) => {
     if (!user) {
@@ -125,11 +141,16 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
     });
   };
 
-  const ResultCard = ({ title, content, onCopy, onSave, extra }: { title: string, content: string | string[], onCopy?: () => void, onSave?: () => void, extra?: React.ReactNode }) => (
+  const ResultCard = ({ title, content, onCopy, onSave, onDownload, extra }: { title: string, content: string | string[], onCopy?: () => void, onSave?: () => void, onDownload?: () => void, extra?: React.ReactNode }) => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-medium">{title}</CardTitle>
         <div className="flex items-center gap-2">
+          {onDownload && (
+             <Button variant="ghost" size="icon" onClick={onDownload} className="h-8 w-8">
+              <FileDown className="h-4 w-4" />
+            </Button>
+          )}
           {onCopy && (
             <Button variant="ghost" size="icon" onClick={onCopy} className="h-8 w-8">
               <Copy className="h-4 w-4" />
@@ -156,18 +177,18 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
       case 'names-taglines':
         return (
           <div className="grid gap-6 md:grid-cols-2">
-            <ResultCard title="Startup Name" content={generatedIdeas.startupName} onCopy={() => handleCopyToClipboard(generatedIdeas.startupName)} onSave={() => handleSave({ startupName: generatedIdeas.startupName }, 'startup-name')} />
-            <ResultCard title="Tagline" content={generatedIdeas.tagline} onCopy={() => handleCopyToClipboard(generatedIdeas.tagline)} onSave={() => handleSave({ tagline: generatedIdeas.tagline }, 'tagline')} />
+            <ResultCard title="Startup Name" content={generatedIdeas.startupName} onCopy={() => handleCopyToClipboard(generatedIdeas.startupName)} onSave={() => handleSave({ startupName: generatedIdeas.startupName }, 'startup-name')} onDownload={() => handleDownload(generatedIdeas.startupName, 'startup-name.txt')} />
+            <ResultCard title="Tagline" content={generatedIdeas.tagline} onCopy={() => handleCopyToClipboard(generatedIdeas.tagline)} onSave={() => handleSave({ tagline: generatedIdeas.tagline }, 'tagline')} onDownload={() => handleDownload(generatedIdeas.tagline, 'tagline.txt')} />
           </div>
         );
       case 'elevator-pitch':
-        return <ResultCard title="Elevator Pitch" content={generatedIdeas.pitch} onCopy={() => handleCopyToClipboard(generatedIdeas.pitch)} onSave={() => handleSave({ pitch: generatedIdeas.pitch }, 'pitch')} />;
+        return <ResultCard title="Elevator Pitch" content={generatedIdeas.pitch} onCopy={() => handleCopyToClipboard(generatedIdeas.pitch)} onSave={() => handleSave({ pitch: generatedIdeas.pitch }, 'pitch')} onDownload={() => handleDownload(generatedIdeas.pitch, 'elevator-pitch.txt')} />;
       case 'problem-solution':
         return (
           <div className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
-                <ResultCard title="Problem Statement" content={generatedIdeas.problemStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.problemStatement)} onSave={() => handleSave({ problemStatement: generatedIdeas.problemStatement }, 'problem-statement')}/>
-                <ResultCard title="Solution Statement" content={generatedIdeas.solutionStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.solutionStatement)} onSave={() => handleSave({ solutionStatement: generatedIdeas.solutionStatement }, 'solution-statement')}/>
+                <ResultCard title="Problem Statement" content={generatedIdeas.problemStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.problemStatement)} onSave={() => handleSave({ problemStatement: generatedIdeas.problemStatement }, 'problem-statement')} onDownload={() => handleDownload(generatedIdeas.problemStatement, 'problem-statement.txt')} />
+                <ResultCard title="Solution Statement" content={generatedIdeas.solutionStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.solutionStatement)} onSave={() => handleSave({ solutionStatement: generatedIdeas.solutionStatement }, 'solution-statement')} onDownload={() => handleDownload(generatedIdeas.solutionStatement, 'solution-statement.txt')} />
             </div>
             <div className="flex justify-end">
                 <Button onClick={handleExportToPdf}>
@@ -180,21 +201,23 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
       case 'audience-uvp':
         return (
           <div className="grid gap-6 md:grid-cols-2">
-            <ResultCard title="Target Audience" content={generatedIdeas.targetAudience} onCopy={() => handleCopyToClipboard(generatedIdeas.targetAudience)} onSave={() => handleSave({ targetAudience: generatedIdeas.targetAudience }, 'target-audience')} />
-            <ResultCard title="Unique Value Proposition" content={generatedIdeas.uniqueValueProposition} onCopy={() => handleCopyToClipboard(generatedIdeas.uniqueValueProposition)} onSave={() => handleSave({ uniqueValueProposition: generatedIdeas.uniqueValueProposition }, 'uvp')} />
+            <ResultCard title="Target Audience" content={generatedIdeas.targetAudience} onCopy={() => handleCopyToClipboard(generatedIdeas.targetAudience)} onSave={() => handleSave({ targetAudience: generatedIdeas.targetAudience }, 'target-audience')} onDownload={() => handleDownload(generatedIdeas.targetAudience, 'target-audience.txt')} />
+            <ResultCard title="Unique Value Proposition" content={generatedIdeas.uniqueValueProposition} onCopy={() => handleCopyToClipboard(generatedIdeas.uniqueValueProposition)} onSave={() => handleSave({ uniqueValueProposition: generatedIdeas.uniqueValueProposition }, 'uvp')} onDownload={() => handleDownload(generatedIdeas.uniqueValueProposition, 'uvp.txt')} />
           </div>
         );
       case 'hero-copy':
-        return <ResultCard title="Website Hero Copy" content={generatedIdeas.heroCopy} onCopy={() => handleCopyToClipboard(generatedIdeas.heroCopy)} onSave={() => handleSave({ heroCopy: generatedIdeas.heroCopy }, 'hero-copy')} />;
+        return <ResultCard title="Website Hero Copy" content={generatedIdeas.heroCopy} onCopy={() => handleCopyToClipboard(generatedIdeas.heroCopy)} onSave={() => handleSave({ heroCopy: generatedIdeas.heroCopy }, 'hero-copy')} onDownload={() => handleDownload(generatedIdeas.heroCopy, 'hero-copy.txt')} />;
       case 'logo-colors':
+        const colorPaletteContent = `Color Palette: ${generatedIdeas.colorPalette.join(', ')}\n\nLogo Concept: ${generatedIdeas.logoConcept}`;
         return (
           <div className="grid gap-6 md:grid-cols-2">
-            <ResultCard title="Logo Concept" content={generatedIdeas.logoConcept} onCopy={() => handleCopyToClipboard(generatedIdeas.logoConcept)} onSave={() => handleSave({ logoConcept: generatedIdeas.logoConcept }, 'logo-concept')} />
+            <ResultCard title="Logo Concept" content={generatedIdeas.logoConcept} onCopy={() => handleCopyToClipboard(generatedIdeas.logoConcept)} onSave={() => handleSave({ logoConcept: generatedIdeas.logoConcept }, 'logo-concept')} onDownload={() => handleDownload(generatedIdeas.logoConcept, 'logo-concept.txt')} />
             <ResultCard 
               title="Color Palette" 
               content={generatedIdeas.colorPalette.join(', ')}
               onCopy={() => handleCopyToClipboard(generatedIdeas.colorPalette.join(', '))}
               onSave={() => handleSave({ colorPalette: generatedIdeas.colorPalette }, 'color-palette')}
+              onDownload={() => handleDownload(generatedIdeas.colorPalette.join(', '), 'color-palette.txt')}
               extra={
                 <div className="flex gap-2 mt-2">
                   {generatedIdeas.colorPalette.map(color => (
