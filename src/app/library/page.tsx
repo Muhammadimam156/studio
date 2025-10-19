@@ -26,10 +26,13 @@ export default function LibraryPage() {
         return <p><span className="font-semibold">Tagline:</span> {item.tagline}</p>;
       case 'pitch':
         return <p><span className="font-semibold">Pitch:</span> {item.pitch}</p>;
-      case 'problem-statement':
-        return <p><span className="font-semibold">Problem:</span> {item.problemStatement}</p>;
-      case 'solution-statement':
-        return <p><span className="font-semibold">Solution:</span> {item.solutionStatement}</p>;
+      case 'problem-solution':
+         return (
+          <div className='space-y-2'>
+            <p><span className="font-semibold">Problem:</span> {item.problemStatement}</p>
+            <p><span className="font-semibold">Solution:</span> {item.solutionStatement}</p>
+          </div>
+        );
       case 'target-audience':
         return <p><span className="font-semibold">Audience:</span> {item.targetAudience}</p>;
       case 'uvp':

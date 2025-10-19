@@ -15,6 +15,7 @@ import jsPDF from 'jspdf';
 import { useAuth, useFirebase } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection } from 'firebase/firestore';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 type GeneratorType = 
   | 'names-taglines'
@@ -27,6 +28,49 @@ type GeneratorType =
 interface StartupGeneratorProps {
   generatorType: GeneratorType;
 }
+
+const CodePreview = ({ code }: { code: string }) => {
+  const { toast } = useToast();
+  const handleCopyToClipboard = () => {
+    navigator.clipboard.writeText(code);
+    toast({
+      title: "Copied to clipboard!",
+    });
+  };
+
+  return (
+    <div className="relative">
+      <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
+        <code>{code}</code>
+      </pre>
+      <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={handleCopyToClipboard}>
+        <Copy className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+};
+
+const ResultWithCode = ({ title, preview, code }: { title: string, preview: React.ReactNode, code: string }) => (
+    <Card>
+        <CardHeader>
+            <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <Tabs defaultValue="preview">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="preview">Preview</TabsTrigger>
+                    <TabsTrigger value="code">Code</TabsTrigger>
+                </TabsList>
+                <TabsContent value="preview" className="pt-4">
+                    {preview}
+                </TabsContent>
+                <TabsContent value="code" className="pt-4">
+                    <CodePreview code={code} />
+                </TabsContent>
+            </Tabs>
+        </CardContent>
+    </Card>
+);
 
 export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
   const [prompt, setPrompt] = useState('');
@@ -184,13 +228,32 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
       case 'elevator-pitch':
         return <ResultCard title="Elevator Pitch" content={generatedIdeas.pitch} onCopy={() => handleCopyToClipboard(generatedIdeas.pitch)} onSave={() => handleSave({ pitch: generatedIdeas.pitch }, 'pitch')} onDownload={() => handleDownload(generatedIdeas.pitch, 'elevator-pitch.txt')} />;
       case 'problem-solution':
+        const problemSolutionCode = `<div>
+  <h3 class="text-xl font-bold">Problem</h3>
+  <p>${generatedIdeas.problemStatement}</p>
+  <h3 class="text-xl font-bold mt-4">Solution</h3>
+  <p>${generatedIdeas.solutionStatement}</p>
+</div>`;
+
         return (
           <div className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-                <ResultCard title="Problem Statement" content={generatedIdeas.problemStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.problemStatement)} onSave={() => handleSave({ problemStatement: generatedIdeas.problemStatement }, 'problem-statement')} onDownload={() => handleDownload(generatedIdeas.problemStatement, 'problem-statement.txt')} />
-                <ResultCard title="Solution Statement" content={generatedIdeas.solutionStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.solutionStatement)} onSave={() => handleSave({ solutionStatement: generatedIdeas.solutionStatement }, 'solution-statement')} onDownload={() => handleDownload(generatedIdeas.solutionStatement, 'solution-statement.txt')} />
-            </div>
-            <div className="flex justify-end">
+            <ResultWithCode 
+              title="Problem & Solution"
+              preview={
+                <div>
+                  <h3 className="text-lg font-semibold">Problem</h3>
+                  <p className="text-muted-foreground">{generatedIdeas.problemStatement}</p>
+                  <h3 className="text-lg font-semibold mt-4">Solution</h3>
+                  <p className="text-muted-foreground">{generatedIdeas.solutionStatement}</p>
+                </div>
+              }
+              code={problemSolutionCode}
+            />
+            <div className="flex justify-end gap-2">
+                <Button onClick={() => handleSave({ problemStatement: generatedIdeas.problemStatement, solutionStatement: generatedIdeas.solutionStatement }, 'problem-solution')}>
+                    <Save className="mr-2" />
+                    Save to Library
+                </Button>
                 <Button onClick={handleExportToPdf}>
                     <FileDown className="mr-2" />
                     Export to PDF
@@ -208,7 +271,6 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
       case 'hero-copy':
         return <ResultCard title="Website Hero Copy" content={generatedIdeas.heroCopy} onCopy={() => handleCopyToClipboard(generatedIdeas.heroCopy)} onSave={() => handleSave({ heroCopy: generatedIdeas.heroCopy }, 'hero-copy')} onDownload={() => handleDownload(generatedIdeas.heroCopy, 'hero-copy.txt')} />;
       case 'logo-colors':
-        const colorPaletteContent = `Color Palette: ${generatedIdeas.colorPalette.join(', ')}\n\nLogo Concept: ${generatedIdeas.logoConcept}`;
         return (
           <div className="grid gap-6 md:grid-cols-2">
             <ResultCard title="Logo Concept" content={generatedIdeas.logoConcept} onCopy={() => handleCopyToClipboard(generatedIdeas.logoConcept)} onSave={() => handleSave({ logoConcept: generatedIdeas.logoConcept }, 'logo-concept')} onDownload={() => handleDownload(generatedIdeas.logoConcept, 'logo-concept.txt')} />
