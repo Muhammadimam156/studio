@@ -270,12 +270,12 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
               }
               code={problemSolutionCode}
             />
-            <div className="flex justify-end gap-2">
-                <Button onClick={() => handleSave({ problemStatement: generatedIdeas.problemStatement, solutionStatement: generatedIdeas.solutionStatement }, 'problem-solution')}>
+            <div className="flex flex-col sm:flex-row justify-end gap-2">
+                <Button onClick={() => handleSave({ problemStatement: generatedIdeas.problemStatement, solutionStatement: generatedIdeas.solutionStatement }, 'problem-solution')} className="w-full sm:w-auto">
                     <Save className="mr-2" />
                     Save to Library
                 </Button>
-                <Button onClick={handleExportToPdf}>
+                <Button onClick={handleExportToPdf} className="w-full sm:w-auto">
                     <FileDown className="mr-2" />
                     Export to PDF
                 </Button>
@@ -331,7 +331,7 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
               className="text-base"
               disabled={isLoading}
             />
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
               <Button type="submit" disabled={isLoading || !prompt} className="w-full sm:w-auto" size="lg">
                 {isLoading ? <LoadingSpinner className="mr-2" /> : <Sparkles className="mr-2" />}
                 Generate
@@ -380,3 +380,5 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
     </div>
   );
 }
+
+    
