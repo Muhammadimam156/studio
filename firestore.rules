@@ -1,63 +1,79 @@
 /**
- * @file Firestore Security Rules for Gemini Studio.
+ * @fileoverview Firestore Security Rules for Gemini Studio application.
  *
- * @corePhilosophy This ruleset enforces a strict user-ownership model. Each user has complete control over their own data, and no user can access another user's data.
- * @dataStructure All user data is nested under `/users/{userId}`, and generated content is further nested under `/users/{userId}/generatedContent/{contentId}`.
- * @keySecurityDecisions
- *   - Users can only access their own data.
- *   - Listing all users is forbidden.
- *   - Public listing of generated content is forbidden; only the owner can list their own content.
- * @denormalization For `GeneratedContent`, the `userId` field is denormalized to match the path. This allows for simple path-based authorization without additional `get()` calls.
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for both user profiles and generated content.
+ * Users can only create, read, update, and delete their own data.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profiles, accessible only to the authenticated user.
+ * - /users/{userId}/generatedContent/{contentId}: Stores user-generated content, accessible only to the owner.
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed.
+ * - Authorization is based on matching the authenticated user's UID to the document ID or a denormalized `userId` field.
+ * - The rules are designed to prevent unauthorized access and ensure data ownership.
+ *
+ * Denormalization for Authorization:
+ * - The `GeneratedContent` entity includes a `userId` field to simplify ownership checks and avoid `get()` calls.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows a user to read and write their own user profile.
+     * @description Protects the `/users` collection and enforces user-based authorization.
      * @path /users/{userId}
-     * @allow (create) User with ID 'user123' can create a document at /users/user123.
-     * @allow (get) User with ID 'user123' can read the document at /users/user123.
-     * @allow (update) User with ID 'user123' can update the document at /users/user123.
-     * @allow (delete) User with ID 'user123' can delete the document at /users/user123.
-     * @deny (create) User with ID 'user456' cannot create a document at /users/user123.
-     * @deny (get) User with ID 'user456' cannot read the document at /users/user123.
-     * @principle Enforces document ownership for writes.
+     * @allow (create) User with UID 'user123' can create their own profile at /users/user123.
+     * @deny (create) User with UID 'user456' cannot create a profile at /users/user123.
+     * @allow (get) User with UID 'user123' can read their own profile at /users/user123.
+     * @deny (get) User with UID 'user456' cannot read the profile at /users/user123.
+     * @allow (update) User with UID 'user123' can update their own profile at /users/user123.
+     * @deny (update) User with UID 'user456' cannot update the profile at /users/user123.
+     * @allow (delete) User with UID 'user123' can delete their own profile at /users/user123.
+     * @deny (delete) User with UID 'user456' cannot delete the profile at /users/user123.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      // Verified user id
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-
-      // Create a new user
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow get: if isOwner(userId);
-      allow update: if isOwner(userId) && resource.data.id == userId;
-      allow delete: if isOwner(userId) && resource != null;
       allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Allows a user to manage their own generated content.
+     * @description Protects the `/generatedContent` subcollection and enforces user-based authorization.
      * @path /users/{userId}/generatedContent/{contentId}
-     * @allow (create) User 'user123' creates content with userId 'user123' under /users/user123/generatedContent/content456.
-     * @allow (get) User 'user123' reads content under /users/user123/generatedContent/content456.
-     * @allow (update) User 'user123' updates content under /users/user123/generatedContent/content456.
-     * @allow (delete) User 'user123' deletes content under /users/user123/generatedContent/content456.
-     * @deny (create) User 'user456' cannot create content under /users/user123/generatedContent/content456.
-     * @deny (get) User 'user456' cannot read content under /users/user123/generatedContent/content456.
-     * @principle Enforces document ownership for writes and validates relational integrity.
+     * @allow (create) User with UID 'user123' can create content under /users/user123/generatedContent/content456.
+     * @deny (create) User with UID 'user456' cannot create content under /users/user123/generatedContent/content456.
+     * @allow (get) User with UID 'user123' can read their own content at /users/user123/generatedContent/content456.
+     * @deny (get) User with UID 'user456' cannot read content under /users/user123/generatedContent/content456.
+     * @allow (update) User with UID 'user123' can update their own content at /users/user123/generatedContent/content456.
+     * @deny (update) User with UID 'user456' cannot update content under /users/user123/generatedContent/content456.
+     * @allow (delete) User with UID 'user123' can delete their own content at /users/user123/generatedContent/content456.
+     * @deny (delete) User with UID 'user456' cannot delete content under /users/user123/generatedContent/content456.
+     * @principle Enforces document ownership for writes and reads.
      */
     match /users/{userId}/generatedContent/{contentId} {
-      function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
-      }
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
       allow get: if isOwner(userId);
-      allow update: if isOwner(userId) && resource != null && request.resource.data.userId == resource.data.userId;
-      allow delete: if isOwner(userId) && resource != null;
       allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && resource.data.userId == userId;
+      allow delete: if isExistingOwner(userId);
     }
+  }
+
+  // Helper functions
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function isOwner(userId) {
+    return isSignedIn() && request.auth.uid == userId;
+  }
+
+  function isExistingOwner(userId) {
+    return isOwner(userId) && resource != null;
   }
 }
