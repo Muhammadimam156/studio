@@ -10,6 +10,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Sparkles, Copy, Save, AlertCircle } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { LoadingSpinner } from './loading-spinner';
+import { useAuth, useFirebase } from '@/firebase';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection } from 'firebase/firestore';
 
 export function TextGenerator() {
   const [prompt, setPrompt] = useState('');
@@ -17,6 +20,9 @@ export function TextGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { toast } = useToast();
+  const { user } = useFirebase();
+  const auth = useAuth();
+  const { firestore } = useFirebase();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,9 +50,34 @@ export function TextGenerator() {
   };
 
   const handleSave = () => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Required",
+        description: "You must be logged in to save content.",
+      });
+      return;
+    }
+     if (!firestore) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Firestore is not available.",
+          });
+        return;
+    }
+
+    const contentRef = collection(firestore, `users/${user.uid}/generatedContent`);
+    addDocumentNonBlocking(contentRef, {
+      text: generatedText,
+      type: 'text',
+      prompt: prompt,
+      createdAt: new Date().toISOString(),
+    });
+
     toast({
-      title: "Feature not available",
-      description: "Saving content will be implemented soon.",
+      title: "Saved to Library!",
+      description: "Your content has been saved successfully.",
     });
   };
 
@@ -96,7 +127,7 @@ export function TextGenerator() {
         <Card>
           <CardHeader>
             <CardTitle>Generated Text</CardTitle>
-          </CardHeader>
+          </Header>
           <CardContent>
             <Textarea
               value={generatedText}

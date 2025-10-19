@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { handleStartupIdeaGeneration } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Sparkles, AlertCircle, Copy, Save, FileDown } from 'lucide-react';
@@ -12,6 +12,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { LoadingSpinner } from './loading-spinner';
 import type { GenerateStartupIdeasOutput } from '@/ai/flows/generate-startup-ideas';
 import jsPDF from 'jspdf';
+import { useAuth, useFirebase } from '@/firebase';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection } from 'firebase/firestore';
 
 type GeneratorType = 
   | 'names-taglines'
@@ -31,6 +34,9 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { toast } = useToast();
+  const { user } = useFirebase();
+  const auth = useAuth();
+  const { firestore } = useFirebase();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,10 +61,36 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
     });
   };
   
-  const handleSave = () => {
+  const handleSave = (contentToSave: any, type: string) => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Required",
+        description: "You must be logged in to save content.",
+      });
+      return;
+    }
+
+    if (!firestore) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Firestore is not available.",
+          });
+        return;
+    }
+
+    const contentRef = collection(firestore, `users/${user.uid}/generatedContent`);
+    addDocumentNonBlocking(contentRef, {
+        ...contentToSave,
+        type: type,
+        prompt: prompt,
+        createdAt: new Date().toISOString(),
+    });
+
     toast({
-      title: "Feature not available",
-      description: "Saving content will be implemented soon.",
+      title: "Saved to Library!",
+      description: "Your content has been saved successfully.",
     });
   };
 
@@ -93,7 +125,7 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
     });
   };
 
-  const ResultCard = ({ title, content, onCopy, extra }: { title: string, content: string | string[], onCopy?: () => void, extra?: React.ReactNode }) => (
+  const ResultCard = ({ title, content, onCopy, onSave, extra }: { title: string, content: string | string[], onCopy?: () => void, onSave?: () => void, extra?: React.ReactNode }) => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-medium">{title}</CardTitle>
@@ -103,9 +135,11 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
               <Copy className="h-4 w-4" />
             </Button>
           )}
-           <Button variant="ghost" size="icon" onClick={handleSave} className="h-8 w-8">
+           {onSave && (
+            <Button variant="ghost" size="icon" onClick={onSave} className="h-8 w-8">
               <Save className="h-4 w-4" />
             </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -122,18 +156,18 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
       case 'names-taglines':
         return (
           <div className="grid gap-6 md:grid-cols-2">
-            <ResultCard title="Startup Name" content={generatedIdeas.startupName} onCopy={() => handleCopyToClipboard(generatedIdeas.startupName)} />
-            <ResultCard title="Tagline" content={generatedIdeas.tagline} onCopy={() => handleCopyToClipboard(generatedIdeas.tagline)} />
+            <ResultCard title="Startup Name" content={generatedIdeas.startupName} onCopy={() => handleCopyToClipboard(generatedIdeas.startupName)} onSave={() => handleSave({ startupName: generatedIdeas.startupName }, 'startup-name')} />
+            <ResultCard title="Tagline" content={generatedIdeas.tagline} onCopy={() => handleCopyToClipboard(generatedIdeas.tagline)} onSave={() => handleSave({ tagline: generatedIdeas.tagline }, 'tagline')} />
           </div>
         );
       case 'elevator-pitch':
-        return <ResultCard title="Elevator Pitch" content={generatedIdeas.pitch} onCopy={() => handleCopyToClipboard(generatedIdeas.pitch)} />;
+        return <ResultCard title="Elevator Pitch" content={generatedIdeas.pitch} onCopy={() => handleCopyToClipboard(generatedIdeas.pitch)} onSave={() => handleSave({ pitch: generatedIdeas.pitch }, 'pitch')} />;
       case 'problem-solution':
         return (
           <div className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
-                <ResultCard title="Problem Statement" content={generatedIdeas.problemStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.problemStatement)} />
-                <ResultCard title="Solution Statement" content={generatedIdeas.solutionStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.solutionStatement)} />
+                <ResultCard title="Problem Statement" content={generatedIdeas.problemStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.problemStatement)} onSave={() => handleSave({ problemStatement: generatedIdeas.problemStatement }, 'problem-statement')}/>
+                <ResultCard title="Solution Statement" content={generatedIdeas.solutionStatement} onCopy={() => handleCopyToClipboard(generatedIdeas.solutionStatement)} onSave={() => handleSave({ solutionStatement: generatedIdeas.solutionStatement }, 'solution-statement')}/>
             </div>
             <div className="flex justify-end">
                 <Button onClick={handleExportToPdf}>
@@ -146,20 +180,21 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
       case 'audience-uvp':
         return (
           <div className="grid gap-6 md:grid-cols-2">
-            <ResultCard title="Target Audience" content={generatedIdeas.targetAudience} onCopy={() => handleCopyToClipboard(generatedIdeas.targetAudience)} />
-            <ResultCard title="Unique Value Proposition" content={generatedIdeas.uniqueValueProposition} onCopy={() => handleCopyToClipboard(generatedIdeas.uniqueValueProposition)} />
+            <ResultCard title="Target Audience" content={generatedIdeas.targetAudience} onCopy={() => handleCopyToClipboard(generatedIdeas.targetAudience)} onSave={() => handleSave({ targetAudience: generatedIdeas.targetAudience }, 'target-audience')} />
+            <ResultCard title="Unique Value Proposition" content={generatedIdeas.uniqueValueProposition} onCopy={() => handleCopyToClipboard(generatedIdeas.uniqueValueProposition)} onSave={() => handleSave({ uniqueValueProposition: generatedIdeas.uniqueValueProposition }, 'uvp')} />
           </div>
         );
       case 'hero-copy':
-        return <ResultCard title="Website Hero Copy" content={generatedIdeas.heroCopy} onCopy={() => handleCopyToClipboard(generatedIdeas.heroCopy)} />;
+        return <ResultCard title="Website Hero Copy" content={generatedIdeas.heroCopy} onCopy={() => handleCopyToClipboard(generatedIdeas.heroCopy)} onSave={() => handleSave({ heroCopy: generatedIdeas.heroCopy }, 'hero-copy')} />;
       case 'logo-colors':
         return (
           <div className="grid gap-6 md:grid-cols-2">
-            <ResultCard title="Logo Concept" content={generatedIdeas.logoConcept} onCopy={() => handleCopyToClipboard(generatedIdeas.logoConcept)} />
+            <ResultCard title="Logo Concept" content={generatedIdeas.logoConcept} onCopy={() => handleCopyToClipboard(generatedIdeas.logoConcept)} onSave={() => handleSave({ logoConcept: generatedIdeas.logoConcept }, 'logo-concept')} />
             <ResultCard 
               title="Color Palette" 
               content={generatedIdeas.colorPalette.join(', ')}
               onCopy={() => handleCopyToClipboard(generatedIdeas.colorPalette.join(', '))}
+              onSave={() => handleSave({ colorPalette: generatedIdeas.colorPalette }, 'color-palette')}
               extra={
                 <div className="flex gap-2 mt-2">
                   {generatedIdeas.colorPalette.map(color => (
