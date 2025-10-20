@@ -12,9 +12,16 @@ export function LoadingSpinner({ className }: { className?: string }) {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={cn("animate-spin h-4 w-4", className)}
+      className={cn("animate-spin", className)}
     >
-      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+      <path d="M12 2v4" />
+      <path d="m16.2 7.8 2.8-2.8" />
+      <path d="M20 12h4" />
+      <path d="m16.2 16.2 2.8 2.8" />
+      <path d="M12 20v4" />
+      <path d="m7.8 16.2-2.8 2.8" />
+      <path d="M4 12H0" />
+      <path d="m7.8 7.8-2.8-2.8" />
     </svg>
   );
 }
