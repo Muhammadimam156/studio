@@ -5,7 +5,6 @@ import { handleStartupIdeaGeneration } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Sparkles, AlertCircle, Copy, Save, FileDown, RefreshCw } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
@@ -357,19 +356,13 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
       )}
 
       {isLoading && (
-        <div className="grid gap-6 md:grid-cols-2">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-1/2" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-4/5 mt-2" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card>
+          <CardContent className="p-6 flex flex-col items-center justify-center gap-4 text-center min-h-[200px]">
+            <LoadingSpinner className="h-8 w-8" />
+            <p className="font-semibold text-lg">Generating ideas...</p>
+            <p className="text-muted-foreground">The AI is working its magic. Please wait a moment.</p>
+          </CardContent>
+        </Card>
       )}
 
       {generatedIdeas && !isLoading && (
@@ -380,5 +373,3 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
     </div>
   );
 }
-
-    

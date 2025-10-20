@@ -5,7 +5,6 @@ import { handleTextGeneration } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Sparkles, Copy, Save, AlertCircle, FileDown, RefreshCw } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
@@ -142,13 +141,10 @@ export function TextGenerator() {
 
       {isLoading && (
         <Card>
-          <CardHeader>
-            <CardTitle>Generating...</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
+          <CardContent className="p-6 flex flex-col items-center justify-center gap-4 text-center min-h-[280px]">
+            <LoadingSpinner className="h-8 w-8" />
+            <p className="font-semibold text-lg">Generating text...</p>
+            <p className="text-muted-foreground">The AI is crafting a response. Please wait a moment.</p>
           </CardContent>
         </Card>
       )}
