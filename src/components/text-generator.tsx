@@ -12,6 +12,7 @@ import { LoadingSpinner } from './loading-spinner';
 import { useAuth, useFirebase } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
 
 export function TextGenerator() {
   const [prompt, setPrompt] = useState('');
@@ -103,78 +104,80 @@ export function TextGenerator() {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Textarea
-              placeholder="e.g., Write a short sci-fi story about a sentient AI on a lonely space probe."
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              rows={3}
-              className="text-base"
-              disabled={isLoading}
-            />
-            <div className="flex flex-wrap gap-2">
-              <Button type="submit" disabled={isLoading || !prompt} size="lg">
-                {isLoading ? <LoadingSpinner className="mr-2" /> : <Sparkles className="mr-2" />}
-                Generate Text
-              </Button>
-              {generatedText && (
-                <Button onClick={handleRegenerate} disabled={isLoading || !prompt} size="lg" variant="outline">
-                    {isLoading ? <LoadingSpinner className="mr-2" /> : <RefreshCw className="mr-2" />}
-                    Regenerate
-                </Button>
-              )}
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
+    <div className="relative space-y-6">
       {isLoading && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 text-center min-h-[280px] bg-background/50 backdrop-blur-sm">
+          <LoadingSpinner className="h-8 w-8" />
+          <p className="font-semibold text-lg">Generating text...</p>
+          <p className="text-muted-foreground">The AI is crafting a response. Please wait a moment.</p>
+        </div>
+      )}
+      <div className={cn('space-y-6', { 'blur-sm pointer-events-none': isLoading })}>
         <Card>
-          <CardContent className="p-6 flex flex-col items-center justify-center gap-4 text-center min-h-[280px]">
-            <LoadingSpinner className="h-8 w-8" />
-            <p className="font-semibold text-lg">Generating text...</p>
-            <p className="text-muted-foreground">The AI is crafting a response. Please wait a moment.</p>
+          <CardContent className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Textarea
+                placeholder="e.g., Write a short sci-fi story about a sentient AI on a lonely space probe."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                rows={3}
+                className="text-base"
+                disabled={isLoading}
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button type="submit" disabled={isLoading || !prompt} size="lg">
+                  {isLoading ? <LoadingSpinner className="mr-2" /> : <Sparkles className="mr-2" />}
+                  Generate Text
+                </Button>
+                {generatedText && (
+                  <Button onClick={handleRegenerate} disabled={isLoading || !prompt} size="lg" variant="outline">
+                      {isLoading ? <LoadingSpinner className="mr-2" /> : <RefreshCw className="mr-2" />}
+                      Regenerate
+                  </Button>
+                )}
+              </div>
+            </form>
           </CardContent>
         </Card>
-      )}
 
-      {generatedText && !isLoading && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Generated Text</CardTitle>
-          </Header>
-          <CardContent>
-            <Textarea
-              value={generatedText}
-              onChange={(e) => setGeneratedText(e.target.value)}
-              rows={10}
-              className="text-base bg-background"
-            />
-          </CardContent>
-          <CardFooter className="gap-2">
-            <Button onClick={handleDownload} variant="secondary">
-              <FileDown className="mr-2" /> Download
-            </Button>
-            <Button onClick={handleCopyToClipboard} variant="secondary">
-              <Copy className="mr-2" /> Copy
-            </Button>
-            <Button onClick={handleSave} variant="secondary">
-              <Save className="mr-2" /> Save to Library
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
+        {error && !isLoading && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+
+        {generatedText && !isLoading && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Generated Text</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={generatedText}
+                onChange={(e) => setGeneratedText(e.target.value)}
+                rows={10}
+                className="text-base bg-background"
+              />
+            </CardContent>
+            <CardFooter className="gap-2">
+              <Button onClick={handleDownload} variant="secondary">
+                <FileDown className="mr-2" /> Download
+              </Button>
+              <Button onClick={handleCopyToClipboard} variant="secondary">
+                <Copy className="mr-2" /> Copy
+              </Button>
+              <Button onClick={handleSave} variant="secondary">
+                <Save className="mr-2" /> Save to Library
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
+
+    

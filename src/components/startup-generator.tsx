@@ -15,6 +15,7 @@ import { useAuth, useFirebase } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection } from 'firebase/firestore';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from '@/lib/utils';
 
 type GeneratorType = 
   | 'names-taglines'
@@ -318,58 +319,59 @@ export function StartupGenerator({ generatorType }: StartupGeneratorProps) {
   };
 
   return (
-    <div className="space-y-8">
-      <Card>
-        <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Textarea
-              placeholder="e.g., I want to build an app that connects students with mentors."
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              rows={4}
-              className="text-base"
-              disabled={isLoading}
-            />
-            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
-              <Button type="submit" disabled={isLoading || !prompt} className="w-full sm:w-auto" size="lg">
-                {isLoading ? <LoadingSpinner className="mr-2" /> : <Sparkles className="mr-2" />}
-                Generate
-              </Button>
-              {generatedIdeas && (
-                <Button onClick={handleRegenerate} disabled={isLoading || !prompt} className="w-full sm:w-auto" size="lg" variant="outline">
-                  {isLoading ? <LoadingSpinner className="mr-2" /> : <RefreshCw className="mr-2" />}
-                  Regenerate
-                </Button>
-              )}
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-      
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {isLoading && (
-        <Card>
-          <CardContent className="p-6 flex flex-col items-center justify-center gap-4 text-center min-h-[200px]">
-            <LoadingSpinner className="h-8 w-8" />
-            <p className="font-semibold text-lg">Generating ideas...</p>
-            <p className="text-muted-foreground">The AI is working its magic. Please wait a moment.</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {generatedIdeas && !isLoading && (
-        <div className="space-y-6">
-          {renderResults()}
+    <div className="relative space-y-8">
+       {isLoading && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 text-center min-h-[200px] bg-background/50 backdrop-blur-sm">
+          <LoadingSpinner className="h-8 w-8" />
+          <p className="font-semibold text-lg">Generating ideas...</p>
+          <p className="text-muted-foreground">The AI is working its magic. Please wait a moment.</p>
         </div>
       )}
+      <div className={cn('space-y-8', { 'blur-sm pointer-events-none': isLoading })}>
+        <Card>
+          <CardContent className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Textarea
+                placeholder="e.g., I want to build an app that connects students with mentors."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                rows={4}
+                className="text-base"
+                disabled={isLoading}
+              />
+              <div className="flex flex-col sm:flex-row flex-wrap gap-2">
+                <Button type="submit" disabled={isLoading || !prompt} className="w-full sm:w-auto" size="lg">
+                  {isLoading ? <LoadingSpinner className="mr-2" /> : <Sparkles className="mr-2" />}
+                  Generate
+                </Button>
+                {generatedIdeas && (
+                  <Button onClick={handleRegenerate} disabled={isLoading || !prompt} className="w-full sm:w-auto" size="lg" variant="outline">
+                    {isLoading ? <LoadingSpinner className="mr-2" /> : <RefreshCw className="mr-2" />}
+                    Regenerate
+                  </Button>
+                )}
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+        
+
+        {error && !isLoading && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {generatedIdeas && !isLoading && (
+          <div className="space-y-6">
+            {renderResults()}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
+    
