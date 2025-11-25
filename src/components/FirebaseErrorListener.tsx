@@ -1,4 +1,5 @@
 'use client';
+//use state lifting 
 
 import { useState, useEffect } from 'react';
 import { errorEmitter } from '@/firebase/error-emitter';
