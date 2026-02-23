@@ -1,6 +1,6 @@
 
 import {genkit} from 'genkit';
-import {googleAI, gemini15Flash} from '@genkit-ai/google-genai';
+import {googleAI} from '@genkit-ai/google-genai';
 
 export const ai = genkit({
   plugins: [
@@ -8,6 +8,6 @@ export const ai = genkit({
       apiKey: process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY,
     }),
   ],
-  // Using the exported model constant is safer than using a string
-  model: gemini15Flash,
+  // Use the string reference for the model to avoid export issues and 404s
+  model: 'googleai/gemini-1.5-flash',
 });
