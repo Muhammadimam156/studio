@@ -8,6 +8,8 @@ export const ai = genkit({
       apiKey: process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY,
     }),
   ],
-  // Use the string reference for the model to avoid export issues and 404s
+  // Use the standard model identifier for the Flash model.
+  // If 'googleai/gemini-1.5-flash' still results in a 404, it may be due to regional restrictions 
+  // or API key permissions on that specific model resource.
   model: 'googleai/gemini-1.5-flash',
 });
