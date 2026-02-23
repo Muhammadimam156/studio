@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -10,6 +11,9 @@ export const metadata: Metadata = {
   title: 'Startup AI',
   description: 'A creative AI assistant app by Firebase Studio',
 };
+
+// Increase the default timeout for server actions to 60 seconds
+export const maxDuration = 60;
 
 export default function RootLayout({
   children,
